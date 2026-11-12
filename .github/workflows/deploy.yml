@@ -1,9 +1,16 @@
-# Example consumer workflow for the ipfs-gh-pages reusable action.
+# THE deploy workflow — one file, two users:
 #
-# By default this tracks the action repo's current state: the newest v* tag
-# (currently v2.7.8) is auto-detected at run time, falling back to the
-# default-branch HEAD when no tag exists. Pin a specific ref instead via
-# workflow_dispatch (action_ref) or by setting REF explicitly below.
+#   1. This repo runs it as its own deploy (dogfooding: the site builds
+#      through the same released action consumers use).
+#   2. Consumers copy it verbatim as their .github/workflows/deploy.yml
+#      (README → "Using this as a GitHub Action").
+#
+# It tracks the action repo's current state: the newest v* tag is
+# auto-detected at run time, falling back to the default-branch HEAD when
+# no tag exists. Pin a specific ref instead via workflow_dispatch
+# (action_ref). The repo-root copy (deploy-gh-pages.yml) is a symlink to
+# this file; scripts/install-consumer-example.mjs installs THIS file into
+# the actions-test fixture's deploy.yml on every release and CAR build.
 
 name: Deploy IPFS site
 
@@ -13,7 +20,7 @@ on:
   workflow_dispatch:
     inputs:
       action_ref:
-        description: 'Action ref (SHA, branch, or tag e.g. v2.7.8). Empty = auto-detect newest v* tag, else default-branch HEAD.'
+        description: 'Action ref (SHA, branch, or tag e.g. v3.0.1). Empty = auto-detect newest v* tag, else default-branch HEAD.'
         required: false
         default: ''
         type: string
@@ -99,7 +106,7 @@ jobs:
           git diff ${{ steps.set-inputs.outputs.action_ref }} origin/main || git diff ${{ steps.set-inputs.outputs.action_ref }} origin/master || true
 
       - name: Build and deploy IPFS site
-        id: drier
+        id: deploy
         uses: ./temp-action-repo
         with:
           node-version: ${{ steps.set-inputs.outputs.node_version }}
